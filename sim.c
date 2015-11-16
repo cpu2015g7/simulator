@@ -16,7 +16,7 @@
 #include "fmul.h"
 
 //rsbの出力をcoreと同じ出力にするかどうか
-#define CORRESPOND_CORE false
+#define CORRESPOND_CORE true
 
 //浮動小数点数命令でFPUのC実装を使うかどうか
 #define USE_FPU false
@@ -233,7 +233,7 @@ void execute_R_f(uint32_t instruction)
 			break;
 		//f2i
 		case 0x08:
-			reg[rd] = (uint32_t)frs;
+			reg[rd] = (uint32_t)roundf(frs);
 			f2i_cnt++;
 			break;
 		//fsqrt
@@ -337,8 +337,9 @@ void execute(uint32_t instruction)
 		//rsb
 		case 0x3f:
 			if (CORRESPOND_CORE)
-				fprintf(stdout, "%c\n", (char)(reg[rs] & 0xff));
-			else
+				fprintf(stdout, "%c", (char)(reg[rs] & 0xff));
+			else //実装し始めに、自分で見やすい為に作った。
+				 //もう使うことはないでしょう。。。
 				fprintf(stdout, "%02x\n", reg[rs] & 0xff);
 			rsb_cnt++;
 			break;
@@ -440,7 +441,7 @@ int main(int argc, char *argv[])
 	FILE *inst_file;
 	uint32_t instruction_line; //アセンブリ命令行数
 	unsigned long instruction_size; //実行する命令数
-	long long int i;
+	unsigned long i;
 
 	//初期設定(大域変数は自動で0に初期化されるのでpc(プログラムカウンタ)、reg[0]($zero)、DATA_MEMの初期化はしない)
 	//命令を格納
@@ -448,7 +449,7 @@ int main(int argc, char *argv[])
 	instruction_line = store_instruction(inst_file);
 	fclose(inst_file);
 	//実行する命令数の設定
-	instruction_size = atoi(argv[2]);
+	instruction_size = (unsigned long)(atol(argv[2]));
 
 	//命令実行
 	for (i = 0; i < instruction_size; i++) {
