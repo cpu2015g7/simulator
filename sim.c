@@ -53,6 +53,8 @@ uint32_t dpc = 1;
 //各命令実行回数のカウンタ
 //nop
 uint32_t nop_cnt;
+//hlt
+uint32_t hlt_cnt;
 //コア命令
 uint32_t add_cnt;
 uint32_t addi_cnt;
@@ -290,6 +292,11 @@ void execute(uint32_t instruction)
 		nop_cnt++;
 		return;
 	}
+	//hlt
+	if (instruction == 0xf0000000) {
+		hlt_cnt++;
+		return;
+	}
 	//nop以外
 	switch (op) {
 		//R形式
@@ -429,6 +436,7 @@ void display_statistics(void)
 	//各命令実行回数を表示
 	fprintf(stderr, "\nEACH INSTRUCTION EXECUTION TIMES\n");
 	fprintf(stderr, "nop:   %"PRIu32"\n", nop_cnt);
+	fprintf(stderr, "hlt:   %"PRIu32"\n", hlt_cnt);
 	fprintf(stderr, "add:   %"PRIu32"\n", add_cnt);
 	fprintf(stderr, "addi:  %"PRIu32"\n", addi_cnt);
 	fprintf(stderr, "sub:   %"PRIu32"\n", sub_cnt);
@@ -474,6 +482,7 @@ int main(int argc, char *argv[])
 	//命令実行
 	for (i = 0; i < instruction_size; i++) {
 		execute(INST_MEM[pc]);
+		if(hlt_cnt) break;
 	}
 
 	//レジスタ状況の表示
