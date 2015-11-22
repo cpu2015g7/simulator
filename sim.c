@@ -79,6 +79,8 @@ uint32_t fadd_cnt;
 uint32_t fmul_cnt;
 uint32_t finv_cnt;
 uint32_t f2i_cnt;
+uint32_t i2f_cnt;
+uint32_t flr_cnt;
 uint32_t fsqrt_cnt;
 
 //2進数文字列を10進数符号無し整数(32bits)に変換
@@ -166,6 +168,27 @@ void execute_R(uint32_t instruction)
 			reg[rd] = reg[rs] ^ 0x80000000;
 			fneg_cnt++;
 			break;
+		//f2i
+		case 0x2d:
+			u.reg = reg[rs];
+			frs = u.freg;
+			reg[rd] = (uint32_t)roundf(frs);
+			f2i_cnt++;
+			break;
+		//i2f
+		case 0x2e:
+			u.freg = (int32_t)reg[rs];
+			reg[rd] = u.reg;
+			i2f_cnt++;
+			break;
+		//flr
+		case 0x2f:
+			u.reg = reg[rs];
+			frs = u.freg;
+			u.freg = floorf(frs);
+			reg[rd] = u.reg;
+			flr_cnt++;
+			break;
 		//sll
 		case 0x00:
 			reg[rd] = reg[rt] << shamt;
@@ -230,11 +253,6 @@ void execute_R_f(uint32_t instruction)
 				reg[rd] = u.reg;
 			}
 			finv_cnt++;
-			break;
-		//f2i
-		case 0x08:
-			reg[rd] = (uint32_t)roundf(frs);
-			f2i_cnt++;
 			break;
 		//fsqrt
 		case 0x18:
@@ -422,6 +440,9 @@ void display_statistics(void)
 	fprintf(stderr, "bne:   %"PRIu32"\n", bne_cnt);
 	fprintf(stderr, "fslt:  %"PRIu32"\n", fslt_cnt);
 	fprintf(stderr, "fneg:  %"PRIu32"\n", fneg_cnt);
+	fprintf(stderr, "f2i:   %"PRIu32"\n", f2i_cnt);
+	fprintf(stderr, "i2f:   %"PRIu32"\n", i2f_cnt);
+	fprintf(stderr, "flr:   %"PRIu32"\n", flr_cnt);
 	fprintf(stderr, "sll:   %"PRIu32"\n", sll_cnt);
 	fprintf(stderr, "srl:   %"PRIu32"\n", srl_cnt);
 	fprintf(stderr, "j:     %"PRIu32"\n", j_cnt);
@@ -432,7 +453,6 @@ void display_statistics(void)
 	fprintf(stderr, "fadd:  %"PRIu32"\n", fadd_cnt);
 	fprintf(stderr, "fmul:  %"PRIu32"\n", fmul_cnt);
 	fprintf(stderr, "finv:  %"PRIu32"\n", finv_cnt);
-	fprintf(stderr, "f2i:   %"PRIu32"\n", f2i_cnt);
 	fprintf(stderr, "fsqrt: %"PRIu32"\n", fsqrt_cnt);
 }
 
