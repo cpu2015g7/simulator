@@ -363,7 +363,7 @@ void execute(uint32_t instruction)
 			break;
 		//rrb
 		case 0x3e:
-			scanf("%"SCNu8"", &rrb_buf);
+			scanf("%c", &rrb_buf);
 			reg[rt] >>= 8; reg[rt] <<= 8; reg[rt] |= rrb_buf;
 			rrb_cnt++;
 			break;
