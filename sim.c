@@ -14,6 +14,9 @@
 #include <assert.h>
 #include "finv.h"
 #include "fmul.h"
+#include "f2i.h"
+#include "i2f.h"
+#include "if.h"
 
 //rsbの出力をcoreと同じ出力にするかどうか
 #define CORRESPOND_CORE true
@@ -172,15 +175,12 @@ void execute_R(uint32_t instruction)
 			break;
 		//f2i
 		case 0x2d:
-			u.reg = reg[rs];
-			frs = u.freg;
-			reg[rd] = (uint32_t)roundf(frs);
+			reg[rd] = f2i_soft(reg[rs]);
 			f2i_cnt++;
 			break;
 		//i2f
 		case 0x2e:
-			u.freg = (int32_t)reg[rs];
-			reg[rd] = u.reg;
+			reg[rd] = i2f_soft(reg[rs]);
 			i2f_cnt++;
 			break;
 		//flr
@@ -261,6 +261,24 @@ void execute_R_f(uint32_t instruction)
 			u.freg = sqrtf(frs);
 			reg[rd] = u.reg;
 			fsqrt_cnt++;
+			break;
+		//f2i
+		case 0x2d:
+			reg[rd] = f2i_soft(reg[rs]);
+			f2i_cnt++;
+			break;
+		//i2f
+		case 0x2e:
+			reg[rd] = i2f_soft(reg[rs]);
+			i2f_cnt++;
+			break;
+		//flr
+		case 0x2f:
+			u.reg = reg[rs];
+			frs = u.freg;
+			u.freg = floorf(frs);
+			reg[rd] = u.reg;
+			flr_cnt++;
 			break;
 		default:
 			assert(false);
