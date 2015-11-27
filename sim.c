@@ -328,6 +328,7 @@ void execute(uint32_t instruction)
 			//符号拡張
 			if ((addr_imm & 0x8000) != 0)
 				addr_imm |= 0xffff0000;
+			assert(reg[rs] + addr_imm < DATA_ADDR);
 			DATA_MEM[reg[rs] + addr_imm] = reg[rt];
 			sw_cnt++;
 			break;
@@ -336,6 +337,7 @@ void execute(uint32_t instruction)
 			//符号拡張
 			if ((addr_imm & 0x8000) != 0)
 				addr_imm |= 0xffff0000;
+			assert(reg[rs] + addr_imm < DATA_ADDR);
 			reg[rt] = DATA_MEM[reg[rs] + addr_imm];
 			lw_cnt++;
 			break;
