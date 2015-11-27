@@ -490,6 +490,11 @@ void display_statistics(void)
 	fprintf(stderr, "fmul:  %"PRIu32"\n", fmul_cnt);
 	fprintf(stderr, "finv:  %"PRIu32"\n", finv_cnt);
 	fprintf(stderr, "fsqrt: %"PRIu32"\n", fsqrt_cnt);
+
+	uint32_t sum = nop_cnt+hlt_cnt+add_cnt+addi_cnt+sub_cnt+ori_cnt+sw_cnt+lw_cnt+slt_cnt+beq_cnt+bne_cnt
+		+fslt_cnt+fneg_cnt+f2i_cnt+i2f_cnt+flr_cnt+sll_cnt+srl_cnt+j_cnt+jr_cnt+jal_cnt
+		+rsb_cnt+rrb_cnt+fadd_cnt+fmul_cnt+finv_cnt+finv_cnt+fsqrt_cnt;
+	fprintf(stderr, "# of total instructions %"PRIu32"\n", sum);
 }
 
 int main(int argc, char *argv[])
