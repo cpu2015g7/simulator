@@ -12,6 +12,7 @@
 #include <stdbool.h>
 #include <math.h>
 #include <assert.h>
+#include <signal.h>
 #include "finv.h"
 #include "fmul.h"
 #include "f2i.h"
@@ -87,6 +88,13 @@ uint32_t f2i_cnt;
 uint32_t i2f_cnt;
 uint32_t flr_cnt;
 uint32_t fsqrt_cnt;
+
+// halt when receiving SIGINT
+void handler(int signum){
+	if(signum == SIGINT){
+		hlt_cnt++;
+	}
+}
 
 //2進数文字列を10進数符号無し整数(32bits)に変換
 uint32_t bin2uint32(const char *ptr)
@@ -490,6 +498,13 @@ int main(int argc, char *argv[])
 	uint32_t instruction_line; //アセンブリ命令行数
 	unsigned long instruction_size; //実行する命令数
 	unsigned long i;
+
+	struct sigaction act = {
+		.sa_handler = handler,
+		.sa_flags = 0,
+	};
+	sigemptyset(&act.sa_mask);
+	sigaction(SIGINT, &act, NULL);
 
 	//初期設定(大域変数は自動で0に初期化されるのでpc(プログラムカウンタ)、reg[0]($zero)、DATA_MEMの初期化はしない)
 	//命令を格納
