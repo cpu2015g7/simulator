@@ -401,7 +401,9 @@ void execute(uint32_t instruction)
 			break;
 		//rrb
 		case 0x3e:
-			scanf("%c", &rrb_buf);
+			if(scanf("%c", &rrb_buf) == EOF) {
+				rrb_buf = 0;
+			}
 			reg[rt] >>= 8; reg[rt] <<= 8; reg[rt] |= rrb_buf;
 			rrb_cnt++;
 			break;
