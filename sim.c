@@ -89,6 +89,9 @@ uint32_t i2f_cnt;
 uint32_t flr_cnt;
 uint32_t fsqrt_cnt;
 
+uint64_t inst_cnt[INST_ADDR];
+uint64_t total_inst_cnt;
+
 // halt when receiving SIGINT
 void handler(int signum){
 	if(signum == SIGINT){
@@ -491,10 +494,32 @@ void display_statistics(void)
 	fprintf(stderr, "finv:  %"PRIu32"\n", finv_cnt);
 	fprintf(stderr, "fsqrt: %"PRIu32"\n", fsqrt_cnt);
 
-	uint32_t sum = nop_cnt+hlt_cnt+add_cnt+addi_cnt+sub_cnt+ori_cnt+sw_cnt+lw_cnt+slt_cnt+beq_cnt+bne_cnt
-		+fslt_cnt+fneg_cnt+f2i_cnt+i2f_cnt+flr_cnt+sll_cnt+srl_cnt+j_cnt+jr_cnt+jal_cnt
-		+rsb_cnt+rrb_cnt+fadd_cnt+fmul_cnt+finv_cnt+finv_cnt+fsqrt_cnt;
-	fprintf(stderr, "# of total instructions %"PRIu32"\n", sum);
+	fprintf(stderr, "# of total instructions: %"PRIu64"\n", total_inst_cnt);
+}
+
+void display_inst_address_histgram()
+{
+	int32_t i, j;
+	int32_t width = 256;
+	int32_t max_tile = 140;
+	char tile_str[500] = {};
+	for(i = 0; i <= INST_ADDR - width; i += width) {
+		uint64_t sum = 0;
+		for(j = 0; j < width; j++) {
+			sum += inst_cnt[i + j];
+		}
+		if(sum > 0) {
+			int32_t tile = (sum * max_tile + total_inst_cnt / 2) / total_inst_cnt;
+			for(j = 0; j < tile - 1; j++) {
+				tile_str[j] = '=';
+			}
+			if(tile > 0) {
+			   	tile_str[tile - 1] = '*';
+			}
+			tile_str[tile] = '\0';
+			fprintf(stderr, "0x%05x-0x%05x: %11"PRIu64":%s\n", i, i + width - 1, sum,  tile_str);
+		}
+	}
 }
 
 int main(int argc, char *argv[])
@@ -521,8 +546,14 @@ int main(int argc, char *argv[])
 
 	//命令実行
 	for (i = 0; i < instruction_size; i++) {
+		inst_cnt[pc]++;
 		execute(INST_MEM[pc]);
 		if(hlt_cnt) break;
+	}
+
+	total_inst_cnt = 0;
+	for(i = 0; i < INST_ADDR; i++) {
+		total_inst_cnt += inst_cnt[i];
 	}
 
 	//レジスタ状況の表示
@@ -530,6 +561,8 @@ int main(int argc, char *argv[])
 
 	//統計情報の表示
 	display_statistics();
+
+	display_inst_address_histgram();
 
 	return 0;
 }
