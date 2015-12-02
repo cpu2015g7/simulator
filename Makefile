@@ -1,8 +1,9 @@
 CC = gcc
-CFLAGS = -Wall -O3 -lm
+CFLAGS = -Wall -Wextra -O3
+LDFLAGS = -lm
 
-sim: sim.c fmul.c finv.c
-	$(CC) $(CFLAGS) -o $@ $^
+sim: sim.c fmul.c finv.c f2i.c i2f.c if.c display.c
+	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 
 clean:
-	rm sim
+	rm -f sim

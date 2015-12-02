@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdint.h>
-#include "fmul.h"
+#include "fpu.h"
 
 static uint32_t sgn(uint32_t x)
 {

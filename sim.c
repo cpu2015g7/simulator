@@ -1,7 +1,7 @@
 //注意点
 //一段遅延分岐->beq,bne命令の直後の命令は如何なる場合も実行される
 //尚、jump系の命令(j, jr, jal)はすぐさま飛ぶ
-
+//breakpointの止める命令は0xf4000000とした
 //#include <assert.h>より前にNDEBUGマクロがあるとassert()は何もしない
 //#define NDEBUG
 
@@ -12,22 +12,27 @@
 #include <stdbool.h>
 #include <math.h>
 #include <assert.h>
-#include "finv.h"
-#include "fmul.h"
+#include <signal.h>
+#include "sim.h"
+#include "fpu.h"
+#include "display.h"
 
 //rsbの出力をcoreと同じ出力にするかどうか
-#define CORRESPOND_CORE true
+bool CORRESPOND_CORE = false;
 
 //浮動小数点数命令でFPUのC実装を使うかどうか
-#define USE_FPU false
-
-#define INST_ADDR (1024*1024*4)
-#define DATA_ADDR (1024*1024*4)
+bool USE_FPU = false;
 
 //命令用メモリ
 uint32_t INST_MEM[INST_ADDR];
 //データ用メモリ
 uint32_t DATA_MEM[DATA_ADDR];
+
+//プログラムカウンタ
+uint32_t pc;
+//pcに加算する値
+//pcは基本的に+1で良いが、一段遅延分岐が関わる命令(beq,bne)では要注意
+uint32_t dpc = 1;
 
 //レジスタ
 //$zero		reg[0]			定数の0
@@ -43,12 +48,6 @@ uint32_t DATA_MEM[DATA_ADDR];
 //$fp		reg[30]			使わない
 //$ra		reg[31]			戻りアドレス
 uint32_t reg[32];
-
-//プログラムカウンタ
-uint32_t pc;
-//pcに加算する値
-//pcは基本的に+1で良いが、一段遅延分岐が関わる命令(beq,bne)では要注意
-uint32_t dpc = 1;
 
 //各命令実行回数のカウンタ
 //nop
@@ -74,12 +73,30 @@ uint32_t jal_cnt;
 //特殊命令
 uint32_t rsb_cnt;
 uint32_t rrb_cnt;
+uint32_t hlt_cnt;
 //浮動小数点数命令
 uint32_t fadd_cnt;
 uint32_t fmul_cnt;
 uint32_t finv_cnt;
-uint32_t f2i_cnt;
 uint32_t fsqrt_cnt;
+uint32_t f2i_cnt;
+uint32_t i2f_cnt;
+uint32_t flr_cnt;
+//全命令
+uint64_t total_inst_cnt;
+
+//pc毎の命令実行回数
+uint64_t inst_cnt[INST_ADDR];
+
+//breakpointのstep実行
+bool step;
+
+// halt when receiving SIGINT
+void handler(int signum){
+	if(signum == SIGINT){
+		hlt_cnt++;
+	}
+}
 
 //2進数文字列を10進数符号無し整数(32bits)に変換
 uint32_t bin2uint32(const char *ptr)
@@ -120,6 +137,28 @@ uint32_t store_instruction(FILE *inst_file)
 	return pos;
 }
 
+//breakpoint
+void breakpoint(void)
+{
+	char cmd[10];
+
+	while (1) {
+		fscanf(stdin, "%s", cmd);
+		if (!strcmp(cmd, "continue"))
+			break;
+		else if (!strcmp(cmd, "reg"))
+			display_register();
+		else if (!strcmp(cmd, "instruction"))
+			display_instruction();
+		else if (!strcmp(cmd, "stack"))
+			display_stack();
+		else if (!strcmp(cmd, "step")) {
+			step = true;
+			break;
+		}
+	}
+}
+
 //R形式の命令を実行
 void execute_R(uint32_t instruction)
 {
@@ -129,7 +168,6 @@ void execute_R(uint32_t instruction)
 	uint32_t shamt = bits(instruction, 21, 25);
 	uint32_t funct = bits(instruction, 26, 31);
 
-	//fslt用
 	union {
 		uint32_t reg;
 		float freg;
@@ -165,6 +203,30 @@ void execute_R(uint32_t instruction)
 		case 0x2c:
 			reg[rd] = reg[rs] ^ 0x80000000;
 			fneg_cnt++;
+			break;
+		//f2i
+		case 0x2d:
+			if (USE_FPU)
+				reg[rd] = f2i(reg[rs]);
+			else
+				reg[rd] = f2i_soft(reg[rs]);
+			f2i_cnt++;
+			break;
+		//i2f
+		case 0x2e:
+			if (USE_FPU)
+				reg[rd] = i2f(reg[rs]);
+			else
+				reg[rd] = i2f_soft(reg[rs]);
+			i2f_cnt++;
+			break;
+		//flr
+		case 0x2f:
+			u.reg = reg[rs];
+			frs = u.freg;
+			u.freg = floorf(frs);
+			reg[rd] = u.reg;
+			flr_cnt++;
 			break;
 		//sll
 		case 0x00:
@@ -231,16 +293,35 @@ void execute_R_f(uint32_t instruction)
 			}
 			finv_cnt++;
 			break;
-		//f2i
-		case 0x08:
-			reg[rd] = (uint32_t)roundf(frs);
-			f2i_cnt++;
-			break;
 		//fsqrt
 		case 0x18:
 			u.freg = sqrtf(frs);
 			reg[rd] = u.reg;
 			fsqrt_cnt++;
+			break;
+		//f2i
+		case 0x2d:
+			if (USE_FPU)
+				reg[rd] = f2i(reg[rs]);
+			else
+				reg[rd] = f2i_soft(reg[rs]);
+			f2i_cnt++;
+			break;
+		//i2f
+		case 0x2e:
+			if (USE_FPU)
+				reg[rd] = i2f(reg[rs]);
+			else
+				reg[rd] = i2f_soft(reg[rs]);
+			i2f_cnt++;
+			break;
+		//flr
+		case 0x2f:
+			u.reg = reg[rs];
+			frs = u.freg;
+			u.freg = floorf(frs);
+			reg[rd] = u.reg;
+			flr_cnt++;
 			break;
 		default:
 			assert(false);
@@ -272,7 +353,17 @@ void execute(uint32_t instruction)
 		nop_cnt++;
 		return;
 	}
-	//nop以外
+	//hlt
+	if (instruction == 0xf0000000) {
+		hlt_cnt++;
+		return;
+	}
+	//breakpoint
+	if (instruction == 0xf4000000) {
+		breakpoint();
+		return;
+	}
+	//nop, hlt, breakpoint以外
 	switch (op) {
 		//R形式
 		case 0x00:
@@ -338,8 +429,7 @@ void execute(uint32_t instruction)
 		case 0x3f:
 			if (CORRESPOND_CORE)
 				fprintf(stdout, "%c", (char)(reg[rs] & 0xff));
-			else //実装し始めに、自分で見やすい為に作った。
-				 //もう使うことはないでしょう。。。
+			else
 				fprintf(stdout, "%02x\n", reg[rs] & 0xff);
 			rsb_cnt++;
 			break;
@@ -365,102 +455,59 @@ void execute(uint32_t instruction)
 		default:
 			assert(false);
 	}
+
+	if (step) {
+		step = false;
+		breakpoint();
+	}
+
 }
 
-//レジスタ状況を表示
-void display_register(void)
-{
-	fprintf(stderr, "\nREGISTER\n");
-	fprintf(stderr, "$zero(reg[0]): %"PRIu32"\n", reg[0]);
-	fprintf(stderr, "$at(reg[1]):   %"PRIu32"\n", reg[1]);
-	fprintf(stderr, "$v0(reg[2]):   %"PRIu32"\n", reg[2]);
-	fprintf(stderr, "$v1(reg[3]):   %"PRIu32"\n", reg[3]);
-	fprintf(stderr, "$a0(reg[4]):   %"PRIu32"\n", reg[4]);
-	fprintf(stderr, "$a1(reg[5]):   %"PRIu32"\n", reg[5]);
-	fprintf(stderr, "$a2(reg[6]):   %"PRIu32"\n", reg[6]);
-	fprintf(stderr, "$a3(reg[7]):   %"PRIu32"\n", reg[7]);
-	fprintf(stderr, "$t0(reg[8]):   %"PRIu32"\n", reg[8]);
-	fprintf(stderr, "$t1(reg[9]):   %"PRIu32"\n", reg[9]);
-	fprintf(stderr, "$t2(reg[10]):  %"PRIu32"\n", reg[10]);
-	fprintf(stderr, "$t3(reg[11]):  %"PRIu32"\n", reg[11]);
-	fprintf(stderr, "$t4(reg[12]):  %"PRIu32"\n", reg[12]);
-	fprintf(stderr, "$t5(reg[13]):  %"PRIu32"\n", reg[13]);
-	fprintf(stderr, "$t6(reg[14]):  %"PRIu32"\n", reg[14]);
-	fprintf(stderr, "$t7(reg[15]):  %"PRIu32"\n", reg[15]);
-	fprintf(stderr, "$s0(reg[16]):  %"PRIu32"\n", reg[16]);
-	fprintf(stderr, "$s1(reg[17]):  %"PRIu32"\n", reg[17]);
-	fprintf(stderr, "$s2(reg[18]):  %"PRIu32"\n", reg[18]);
-	fprintf(stderr, "$s3(reg[19]):  %"PRIu32"\n", reg[19]);
-	fprintf(stderr, "$s4(reg[20]):  %"PRIu32"\n", reg[20]);
-	fprintf(stderr, "$s5(reg[21]):  %"PRIu32"\n", reg[21]);
-	fprintf(stderr, "$s6(reg[22]):  %"PRIu32"\n", reg[22]);
-	fprintf(stderr, "$s7(reg[23]):  %"PRIu32"\n", reg[23]);
-	fprintf(stderr, "$t8(reg[24]):  %"PRIu32"\n", reg[24]);
-	fprintf(stderr, "$t9(reg[25]):  %"PRIu32"\n", reg[25]);
-	fprintf(stderr, "$k0(reg[26]):  %"PRIu32"\n", reg[26]);
-	fprintf(stderr, "$k1(reg[27]):  %"PRIu32"\n", reg[27]);
-	fprintf(stderr, "$gp(reg[28]):  %"PRIu32"\n", reg[28]);
-	fprintf(stderr, "$sp(reg[29]):  %"PRIu32"\n", reg[29]);
-	fprintf(stderr, "$fp(reg[30]):  %"PRIu32"\n", reg[30]);
-	fprintf(stderr, "$ra(reg[31]):  %"PRIu32"\n", reg[31]);
-}
 
-//統計情報を表示
-void display_statistics(void)
-{
-	//各命令実行回数を表示
-	fprintf(stderr, "\nEACH INSTRUCTION EXECUTION TIMES\n");
-	fprintf(stderr, "nop:   %"PRIu32"\n", nop_cnt);
-	fprintf(stderr, "add:   %"PRIu32"\n", add_cnt);
-	fprintf(stderr, "addi:  %"PRIu32"\n", addi_cnt);
-	fprintf(stderr, "sub:   %"PRIu32"\n", sub_cnt);
-	fprintf(stderr, "ori:   %"PRIu32"\n", ori_cnt);
-	fprintf(stderr, "sw:    %"PRIu32"\n", sw_cnt);
-	fprintf(stderr, "lw:    %"PRIu32"\n", lw_cnt);
-	fprintf(stderr, "slt:   %"PRIu32"\n", slt_cnt);
-	fprintf(stderr, "beq:   %"PRIu32"\n", beq_cnt);
-	fprintf(stderr, "bne:   %"PRIu32"\n", bne_cnt);
-	fprintf(stderr, "fslt:  %"PRIu32"\n", fslt_cnt);
-	fprintf(stderr, "fneg:  %"PRIu32"\n", fneg_cnt);
-	fprintf(stderr, "sll:   %"PRIu32"\n", sll_cnt);
-	fprintf(stderr, "srl:   %"PRIu32"\n", srl_cnt);
-	fprintf(stderr, "j:     %"PRIu32"\n", j_cnt);
-	fprintf(stderr, "jr:    %"PRIu32"\n", jr_cnt);
-	fprintf(stderr, "jal:   %"PRIu32"\n", jal_cnt);
-	fprintf(stderr, "rsb:   %"PRIu32"\n", rsb_cnt);
-	fprintf(stderr, "rrb:   %"PRIu32"\n", rrb_cnt);
-	fprintf(stderr, "fadd:  %"PRIu32"\n", fadd_cnt);
-	fprintf(stderr, "fmul:  %"PRIu32"\n", fmul_cnt);
-	fprintf(stderr, "finv:  %"PRIu32"\n", finv_cnt);
-	fprintf(stderr, "f2i:   %"PRIu32"\n", f2i_cnt);
-	fprintf(stderr, "fsqrt: %"PRIu32"\n", fsqrt_cnt);
-}
 
 int main(int argc, char *argv[])
 {
 	FILE *inst_file;
-	uint32_t instruction_line; //アセンブリ命令行数
-	unsigned long instruction_size; //実行する命令数
+	uint32_t instruction_line; //アセンブリ命令行数<---今の所、使ってない
 	unsigned long i;
+
+	struct sigaction act = {
+		.sa_handler = handler,
+		.sa_flags = 0,
+	};
+	sigemptyset(&act.sa_mask);
+	sigaction(SIGINT, &act, NULL);
 
 	//初期設定(大域変数は自動で0に初期化されるのでpc(プログラムカウンタ)、reg[0]($zero)、DATA_MEMの初期化はしない)
 	//命令を格納
 	inst_file = fopen(argv[1], "r");
 	instruction_line = store_instruction(inst_file);
 	fclose(inst_file);
-	//実行する命令数の設定
-	instruction_size = (unsigned long)(atol(argv[2]));
+
+	//オプションの設定
+	for (i = 2; argv[i] != NULL; i++) {
+		if (!strcmp(argv[i], "-core"))
+			CORRESPOND_CORE = true;
+		else if (!strcmp(argv[i], "-fpu"))
+			USE_FPU = true;
+	}
 
 	//命令実行
-	for (i = 0; i < instruction_size; i++) {
+	for (i = 0; ; i++) {
+		inst_cnt[pc]++;
+		total_inst_cnt++;
 		execute(INST_MEM[pc]);
+		if (hlt_cnt) break;
 	}
 
 	//レジスタ状況の表示
+	fprintf(stderr, "REGISTER\n");
 	display_register();
-
-	//統計情報の表示
-	display_statistics();
+	//命令実行回数の表示
+	fprintf(stderr, "INSTRUCTION\n");
+	display_instruction();
+	//ヒストグラム
+	display_inst_address_histgram();
 
 	return 0;
 }

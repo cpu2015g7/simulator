@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdint.h>
-#include "finv.h"
+#include "fpu.h"
 
 static uint32_t synth(uint32_t sgn, uint32_t ex, uint32_t man) {
   return (sgn << 31) | (ex << 23) | man;
