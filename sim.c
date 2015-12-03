@@ -18,7 +18,7 @@
 #include "display.h"
 
 //rsbの出力をcoreと同じ出力にするかどうか
-bool CORRESPOND_CORE = false;
+bool CORRESPOND_CORE = true;
 
 //浮動小数点数命令でFPUのC実装を使うかどうか
 bool USE_FPU = false;
@@ -140,10 +140,13 @@ uint32_t store_instruction(FILE *inst_file)
 //breakpoint
 void breakpoint(void)
 {
-	char cmd[10];
+	char cmd[15];
 
 	while (1) {
-		fscanf(stdin, "%s", cmd);
+		fscanf(stdin, "%14s", cmd);
+		if (cmd[strlen(cmd)-1] != '\n') {
+			while(getchar() != '\n');
+		}
 		if (!strcmp(cmd, "continue"))
 			break;
 		else if (!strcmp(cmd, "reg"))
@@ -486,8 +489,8 @@ int main(int argc, char *argv[])
 
 	//オプションの設定
 	for (i = 2; argv[i] != NULL; i++) {
-		if (!strcmp(argv[i], "-core"))
-			CORRESPOND_CORE = true;
+		if (!strcmp(argv[i], "-ncore"))
+			CORRESPOND_CORE = false;
 		else if (!strcmp(argv[i], "-fpu"))
 			USE_FPU = true;
 	}
