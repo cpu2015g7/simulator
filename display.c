@@ -56,34 +56,34 @@ void display_register(void)
 void display_instruction(void)
 {
 	//各命令実行回数を表示
-	fprintf(stderr, "nop:   %"PRIu32"\n", nop_cnt);
-	fprintf(stderr, "add:   %"PRIu32"\n", add_cnt);
-	fprintf(stderr, "addi:  %"PRIu32"\n", addi_cnt);
-	fprintf(stderr, "sub:   %"PRIu32"\n", sub_cnt);
-	fprintf(stderr, "ori:   %"PRIu32"\n", ori_cnt);
-	fprintf(stderr, "sw:    %"PRIu32"\n", sw_cnt);
-	fprintf(stderr, "lw:    %"PRIu32"\n", lw_cnt);
-	fprintf(stderr, "slt:   %"PRIu32"\n", slt_cnt);
-	fprintf(stderr, "beq:   %"PRIu32"\n", beq_cnt);
-	fprintf(stderr, "bne:   %"PRIu32"\n", bne_cnt);
-	fprintf(stderr, "fslt:  %"PRIu32"\n", fslt_cnt);
-	fprintf(stderr, "fneg:  %"PRIu32"\n", fneg_cnt);
-	fprintf(stderr, "f2i:   %"PRIu32"\n", f2i_cnt);
-	fprintf(stderr, "i2f:   %"PRIu32"\n", i2f_cnt);
-	fprintf(stderr, "flr:   %"PRIu32"\n", flr_cnt);
-	fprintf(stderr, "sll:   %"PRIu32"\n", sll_cnt);
-	fprintf(stderr, "srl:   %"PRIu32"\n", srl_cnt);
-	fprintf(stderr, "j:     %"PRIu32"\n", j_cnt);
-	fprintf(stderr, "jr:    %"PRIu32"\n", jr_cnt);
-	fprintf(stderr, "jal:   %"PRIu32"\n", jal_cnt);
-	fprintf(stderr, "rsb:   %"PRIu32"\n", rsb_cnt);
-	fprintf(stderr, "rrb:   %"PRIu32"\n", rrb_cnt);
-	fprintf(stderr, "hlt:   %"PRIu32"\n", hlt_cnt);
-	fprintf(stderr, "fadd:  %"PRIu32"\n", fadd_cnt);
-	fprintf(stderr, "fmul:  %"PRIu32"\n", fmul_cnt);
-	fprintf(stderr, "finv:  %"PRIu32"\n", finv_cnt);
-	fprintf(stderr, "f2i:   %"PRIu32"\n", f2i_cnt);
-	fprintf(stderr, "fsqrt: %"PRIu32"\n", fsqrt_cnt);
+	fprintf(stderr, "nop:   %"PRIu64"\n", nop_cnt);
+	fprintf(stderr, "add:   %"PRIu64"\n", add_cnt);
+	fprintf(stderr, "addi:  %"PRIu64"\n", addi_cnt);
+	fprintf(stderr, "sub:   %"PRIu64"\n", sub_cnt);
+	fprintf(stderr, "ori:   %"PRIu64"\n", ori_cnt);
+	fprintf(stderr, "sw:    %"PRIu64"\n", sw_cnt);
+	fprintf(stderr, "lw:    %"PRIu64"\n", lw_cnt);
+	fprintf(stderr, "slt:   %"PRIu64"\n", slt_cnt);
+	fprintf(stderr, "beq:   %"PRIu64"\n", beq_cnt);
+	fprintf(stderr, "bne:   %"PRIu64"\n", bne_cnt);
+	fprintf(stderr, "fslt:  %"PRIu64"\n", fslt_cnt);
+	fprintf(stderr, "fneg:  %"PRIu64"\n", fneg_cnt);
+	fprintf(stderr, "f2i:   %"PRIu64"\n", f2i_cnt);
+	fprintf(stderr, "i2f:   %"PRIu64"\n", i2f_cnt);
+	fprintf(stderr, "flr:   %"PRIu64"\n", flr_cnt);
+	fprintf(stderr, "sll:   %"PRIu64"\n", sll_cnt);
+	fprintf(stderr, "srl:   %"PRIu64"\n", srl_cnt);
+	fprintf(stderr, "j:     %"PRIu64"\n", j_cnt);
+	fprintf(stderr, "jr:    %"PRIu64"\n", jr_cnt);
+	fprintf(stderr, "jal:   %"PRIu64"\n", jal_cnt);
+	fprintf(stderr, "rsb:   %"PRIu64"\n", rsb_cnt);
+	fprintf(stderr, "rrb:   %"PRIu64"\n", rrb_cnt);
+	fprintf(stderr, "hlt:   %"PRIu64"\n", hlt_cnt);
+	fprintf(stderr, "fadd:  %"PRIu64"\n", fadd_cnt);
+	fprintf(stderr, "fmul:  %"PRIu64"\n", fmul_cnt);
+	fprintf(stderr, "finv:  %"PRIu64"\n", finv_cnt);
+	fprintf(stderr, "f2i:   %"PRIu64"\n", f2i_cnt);
+	fprintf(stderr, "fsqrt: %"PRIu64"\n", fsqrt_cnt);
 	fprintf(stderr, "# of total instructions: %"PRIu64"\n", total_inst_cnt);
 }
 

@@ -29,37 +29,37 @@ extern uint32_t reg[32];
 
 //各命令実行回数のカウンタ
 //nop
-extern uint32_t nop_cnt;
+extern uint64_t nop_cnt;
 //コア命令
-extern uint32_t add_cnt;
-extern uint32_t addi_cnt;
-extern uint32_t sub_cnt;
-extern uint32_t ori_cnt;
-extern uint32_t sw_cnt;
-extern uint32_t lw_cnt;
-extern uint32_t slt_cnt;
-extern uint32_t beq_cnt;
-extern uint32_t bne_cnt;
-extern uint32_t fslt_cnt;
-extern uint32_t fneg_cnt;
+extern uint64_t add_cnt;
+extern uint64_t addi_cnt;
+extern uint64_t sub_cnt;
+extern uint64_t ori_cnt;
+extern uint64_t sw_cnt;
+extern uint64_t lw_cnt;
+extern uint64_t slt_cnt;
+extern uint64_t beq_cnt;
+extern uint64_t bne_cnt;
+extern uint64_t fslt_cnt;
+extern uint64_t fneg_cnt;
 //コア命令2
-extern uint32_t sll_cnt;
-extern uint32_t srl_cnt;
-extern uint32_t j_cnt;
-extern uint32_t jr_cnt;
-extern uint32_t jal_cnt;
+extern uint64_t sll_cnt;
+extern uint64_t srl_cnt;
+extern uint64_t j_cnt;
+extern uint64_t jr_cnt;
+extern uint64_t jal_cnt;
 //特殊命令
-extern uint32_t rsb_cnt;
-extern uint32_t rrb_cnt;
-extern uint32_t hlt_cnt;
+extern uint64_t rsb_cnt;
+extern uint64_t rrb_cnt;
+extern uint64_t hlt_cnt;
 //浮動小数点数命令
-extern uint32_t fadd_cnt;
-extern uint32_t fmul_cnt;
-extern uint32_t finv_cnt;
-extern uint32_t fsqrt_cnt;
-extern uint32_t f2i_cnt;
-extern uint32_t i2f_cnt;
-extern uint32_t flr_cnt;
+extern uint64_t fadd_cnt;
+extern uint64_t fmul_cnt;
+extern uint64_t finv_cnt;
+extern uint64_t fsqrt_cnt;
+extern uint64_t f2i_cnt;
+extern uint64_t i2f_cnt;
+extern uint64_t flr_cnt;
 //全命令
 extern uint64_t total_inst_cnt;
 

@@ -51,37 +51,37 @@ uint32_t reg[32];
 
 //各命令実行回数のカウンタ
 //nop
-uint32_t nop_cnt;
+uint64_t nop_cnt;
 //コア命令
-uint32_t add_cnt;
-uint32_t addi_cnt;
-uint32_t sub_cnt;
-uint32_t ori_cnt;
-uint32_t sw_cnt;
-uint32_t lw_cnt;
-uint32_t slt_cnt;
-uint32_t beq_cnt;
-uint32_t bne_cnt;
-uint32_t fslt_cnt;
-uint32_t fneg_cnt;
+uint64_t add_cnt;
+uint64_t addi_cnt;
+uint64_t sub_cnt;
+uint64_t ori_cnt;
+uint64_t sw_cnt;
+uint64_t lw_cnt;
+uint64_t slt_cnt;
+uint64_t beq_cnt;
+uint64_t bne_cnt;
+uint64_t fslt_cnt;
+uint64_t fneg_cnt;
 //コア命令2
-uint32_t sll_cnt;
-uint32_t srl_cnt;
-uint32_t j_cnt;
-uint32_t jr_cnt;
-uint32_t jal_cnt;
+uint64_t sll_cnt;
+uint64_t srl_cnt;
+uint64_t j_cnt;
+uint64_t jr_cnt;
+uint64_t jal_cnt;
 //特殊命令
-uint32_t rsb_cnt;
-uint32_t rrb_cnt;
-uint32_t hlt_cnt;
+uint64_t rsb_cnt;
+uint64_t rrb_cnt;
+uint64_t hlt_cnt;
 //浮動小数点数命令
-uint32_t fadd_cnt;
-uint32_t fmul_cnt;
-uint32_t finv_cnt;
-uint32_t fsqrt_cnt;
-uint32_t f2i_cnt;
-uint32_t i2f_cnt;
-uint32_t flr_cnt;
+uint64_t fadd_cnt;
+uint64_t fmul_cnt;
+uint64_t finv_cnt;
+uint64_t fsqrt_cnt;
+uint64_t f2i_cnt;
+uint64_t i2f_cnt;
+uint64_t flr_cnt;
 //全命令
 uint64_t total_inst_cnt;
 
@@ -471,7 +471,8 @@ void execute(uint32_t instruction)
 int main(int argc, char *argv[])
 {
 	FILE *inst_file;
-	uint32_t instruction_line; //アセンブリ命令行数<---今の所、使ってない
+	uint64_t instruction_line;
+	unsigned long max_inst; //最大命令実行数
 	unsigned long i;
 
 	struct sigaction act = {
@@ -487,8 +488,11 @@ int main(int argc, char *argv[])
 	instruction_line = store_instruction(inst_file);
 	fclose(inst_file);
 
+	//最大命令実行数
+	max_inst = atol(argv[2]);
+
 	//オプションの設定
-	for (i = 2; argv[i] != NULL; i++) {
+	for (i = 3; argv[i] != NULL; i++) {
 		if (!strcmp(argv[i], "-ncore"))
 			CORRESPOND_CORE = false;
 		else if (!strcmp(argv[i], "-fpu"))
@@ -496,7 +500,7 @@ int main(int argc, char *argv[])
 	}
 
 	//命令実行
-	for (i = 0; ; i++) {
+	for (i = 0; i < max_inst; i++) {
 		inst_cnt[pc]++;
 		total_inst_cnt++;
 		execute(INST_MEM[pc]);
