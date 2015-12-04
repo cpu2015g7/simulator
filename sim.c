@@ -49,44 +49,14 @@ uint32_t dpc = 1;
 //$ra		reg[31]			戻りアドレス
 uint32_t reg[32];
 
-//各命令実行回数のカウンタ
-//nop
-uint64_t nop_cnt;
-//コア命令
-uint64_t add_cnt;
-uint64_t addi_cnt;
-uint64_t sub_cnt;
-uint64_t ori_cnt;
-uint64_t sw_cnt;
-uint64_t lw_cnt;
-uint64_t slt_cnt;
-uint64_t beq_cnt;
-uint64_t bne_cnt;
-uint64_t fslt_cnt;
-uint64_t fneg_cnt;
-//コア命令2
-uint64_t sll_cnt;
-uint64_t srl_cnt;
-uint64_t j_cnt;
-uint64_t jr_cnt;
-uint64_t jal_cnt;
-//特殊命令
-uint64_t rsb_cnt;
-uint64_t rrb_cnt;
-uint64_t hlt_cnt;
-//浮動小数点数命令
-uint64_t fadd_cnt;
-uint64_t fmul_cnt;
-uint64_t finv_cnt;
-uint64_t fsqrt_cnt;
-uint64_t f2i_cnt;
-uint64_t i2f_cnt;
-uint64_t flr_cnt;
+//各命令実行回数
+uint64_t each_inst_cnt[TYPE];
+
 //全命令
 uint64_t total_inst_cnt;
 
 //pc毎の命令実行回数
-uint64_t inst_cnt[INST_ADDR];
+uint64_t pc_inst_cnt[INST_ADDR];
 
 //breakpointのstep実行
 bool step;
@@ -94,7 +64,7 @@ bool step;
 // halt when receiving SIGINT
 void handler(int signum){
 	if(signum == SIGINT){
-		hlt_cnt++;
+		each_inst_cnt[hlt_cnt]++;
 	}
 }
 
@@ -181,17 +151,17 @@ void execute_R(uint32_t instruction)
 		//add
 		case 0x20:
 			reg[rd] = reg[rs] + reg[rt];
-			add_cnt++;
+			each_inst_cnt[add_cnt]++;
 			break;
 		//sub
 		case 0x22:
 			reg[rd] = reg[rs] - reg[rt];
-			sub_cnt++;
+			each_inst_cnt[sub_cnt]++;
 			break;
 		//slt
 		case 0x2a:
 			reg[rd] = ((int)reg[rs] < (int)reg[rt]) ? 1 : 0;
-			slt_cnt++;
+			each_inst_cnt[slt_cnt]++;
 			break;
 		//fslt
 		case 0x2b:
@@ -200,12 +170,12 @@ void execute_R(uint32_t instruction)
 			u.reg = reg[rt];
 			frt = u.freg;
 			reg[rd] = (frs < frt) ? 1 : 0;
-			fslt_cnt++;
+			each_inst_cnt[fslt_cnt]++;
 			break;
 		//fneg
 		case 0x2c:
 			reg[rd] = reg[rs] ^ 0x80000000;
-			fneg_cnt++;
+			each_inst_cnt[fneg_cnt]++;
 			break;
 		//f2i
 		case 0x2d:
@@ -213,7 +183,7 @@ void execute_R(uint32_t instruction)
 				reg[rd] = f2i(reg[rs]);
 			else
 				reg[rd] = f2i_soft(reg[rs]);
-			f2i_cnt++;
+			each_inst_cnt[f2i_cnt]++;
 			break;
 		//i2f
 		case 0x2e:
@@ -221,7 +191,7 @@ void execute_R(uint32_t instruction)
 				reg[rd] = i2f(reg[rs]);
 			else
 				reg[rd] = i2f_soft(reg[rs]);
-			i2f_cnt++;
+			each_inst_cnt[i2f_cnt]++;
 			break;
 		//flr
 		case 0x2f:
@@ -229,22 +199,22 @@ void execute_R(uint32_t instruction)
 			frs = u.freg;
 			u.freg = floorf(frs);
 			reg[rd] = u.reg;
-			flr_cnt++;
+			each_inst_cnt[flr_cnt]++;
 			break;
 		//sll
 		case 0x00:
 			reg[rd] = reg[rt] << shamt;
-			sll_cnt++;
+			each_inst_cnt[sll_cnt]++;
 			break;
 		//srl
 		case 0x02:
 			reg[rd] = reg[rt] >> shamt;
-			srl_cnt++;
+			each_inst_cnt[srl_cnt]++;
 			break;
 		//jr
 		case 0x08:
 			pc = reg[rs];
-			jr_cnt++;
+			each_inst_cnt[jr_cnt]++;
 			break;
 		default:
 			assert(false);
@@ -274,7 +244,7 @@ void execute_R_f(uint32_t instruction)
 		case 0x20:
 			u.freg = frs + frt;
 			reg[rd] = u.reg;
-			fadd_cnt++;
+			each_inst_cnt[fadd_cnt]++;
 			break;
 		//fmul
 		case 0x01:
@@ -284,7 +254,7 @@ void execute_R_f(uint32_t instruction)
 				u.freg = frs * frt;
 				reg[rd] = u.reg;
 			}
-			fmul_cnt++;
+			each_inst_cnt[fmul_cnt]++;
 			break;
 		//finv
 		case 0x03:
@@ -294,13 +264,13 @@ void execute_R_f(uint32_t instruction)
 				u.freg = 1.0 / frs;
 				reg[rd] = u.reg;
 			}
-			finv_cnt++;
+			each_inst_cnt[finv_cnt]++;
 			break;
 		//fsqrt
 		case 0x18:
 			u.freg = sqrtf(frs);
 			reg[rd] = u.reg;
-			fsqrt_cnt++;
+			each_inst_cnt[fsqrt_cnt]++;
 			break;
 		//f2i
 		case 0x2d:
@@ -308,7 +278,7 @@ void execute_R_f(uint32_t instruction)
 				reg[rd] = f2i(reg[rs]);
 			else
 				reg[rd] = f2i_soft(reg[rs]);
-			f2i_cnt++;
+			each_inst_cnt[f2i_cnt]++;
 			break;
 		//i2f
 		case 0x2e:
@@ -316,7 +286,7 @@ void execute_R_f(uint32_t instruction)
 				reg[rd] = i2f(reg[rs]);
 			else
 				reg[rd] = i2f_soft(reg[rs]);
-			i2f_cnt++;
+			each_inst_cnt[i2f_cnt]++;
 			break;
 		//flr
 		case 0x2f:
@@ -324,7 +294,7 @@ void execute_R_f(uint32_t instruction)
 			frs = u.freg;
 			u.freg = floorf(frs);
 			reg[rd] = u.reg;
-			flr_cnt++;
+			each_inst_cnt[flr_cnt]++;
 			break;
 		default:
 			assert(false);
@@ -353,12 +323,12 @@ void execute(uint32_t instruction)
 
 	//nop
 	if (instruction == 0) {
-		nop_cnt++;
+		each_inst_cnt[nop_cnt]++;
 		return;
 	}
 	//hlt
 	if (instruction == 0xf0000000) {
-		hlt_cnt++;
+		each_inst_cnt[hlt_cnt]++;
 		return;
 	}
 	//breakpoint
@@ -385,12 +355,12 @@ void execute(uint32_t instruction)
 			if ((addr_imm & 0x8000) != 0)
 				addr_imm |= 0xffff0000;
 			reg[rt] = reg[rs] + addr_imm;
-			addi_cnt++;
+			each_inst_cnt[addi_cnt]++;
 			break;
 		//ori
 		case 0x0d:
 			reg[rt] = reg[rs] | addr_imm;
-			ori_cnt++;
+			each_inst_cnt[ori_cnt]++;
 			break;
 		//sw
 		case 0x2b:
@@ -398,7 +368,7 @@ void execute(uint32_t instruction)
 			if ((addr_imm & 0x8000) != 0)
 				addr_imm |= 0xffff0000;
 			DATA_MEM[reg[rs] + addr_imm] = reg[rt];
-			sw_cnt++;
+			each_inst_cnt[sw_cnt]++;
 			break;
 		//lw
 		case 0x23:
@@ -406,7 +376,7 @@ void execute(uint32_t instruction)
 			if ((addr_imm & 0x8000) != 0)
 				addr_imm |= 0xffff0000;
 			reg[rt] = DATA_MEM[reg[rs] + addr_imm];
-			lw_cnt++;
+			each_inst_cnt[lw_cnt]++;
 			break;
 		//beq
 		case 0x04:
@@ -416,7 +386,7 @@ void execute(uint32_t instruction)
 					addr_imm |= 0xffff0000;
 				dpc = addr_imm;
 			}
-			beq_cnt++;
+			each_inst_cnt[beq_cnt]++;
 			break;
 		//bne
 		case 0x05:
@@ -426,7 +396,7 @@ void execute(uint32_t instruction)
 					addr_imm |= 0xffff0000;
 				dpc = addr_imm;
 			}
-			bne_cnt++;
+			each_inst_cnt[bne_cnt]++;
 			break;
 		//rsb
 		case 0x3f:
@@ -434,26 +404,26 @@ void execute(uint32_t instruction)
 				fprintf(stdout, "%c", (char)(reg[rs] & 0xff));
 			else
 				fprintf(stdout, "%02x\n", reg[rs] & 0xff);
-			rsb_cnt++;
+			each_inst_cnt[rsb_cnt]++;
 			break;
 		//rrb
 		case 0x3e:
 			scanf("%"SCNu8"", &rrb_buf);
 			reg[rt] >>= 8; reg[rt] <<= 8; reg[rt] |= rrb_buf;
-			rrb_cnt++;
+			each_inst_cnt[rrb_cnt]++;
 			break;
 
 		//J形式
 		//j
 		case 0x02:
 			pc = addr;
-			j_cnt++;
+			each_inst_cnt[j_cnt]++;
 			break;
 		//jal
 		case 0x03:
 			reg[31] = pc;
 			pc = addr;
-			jal_cnt++;
+			each_inst_cnt[jal_cnt]++;
 			break;
 		default:
 			assert(false);
@@ -501,10 +471,10 @@ int main(int argc, char *argv[])
 
 	//命令実行
 	for (i = 0; i < max_inst; i++) {
-		inst_cnt[pc]++;
+		pc_inst_cnt[pc]++;
 		total_inst_cnt++;
 		execute(INST_MEM[pc]);
-		if (hlt_cnt) break;
+		if (each_inst_cnt[hlt_cnt]) break;
 	}
 
 	//レジスタ状況の表示

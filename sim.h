@@ -4,6 +4,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#define TYPE 27
+
 #define INST_ADDR (1024*1024*4)
 #define DATA_ADDR (1024*1024*4)
 
@@ -27,43 +29,25 @@ extern uint32_t DATA_MEM[DATA_ADDR];
 //$ra		reg[31]			戻りアドレス
 extern uint32_t reg[32];
 
-//各命令実行回数のカウンタ
-//nop
-extern uint64_t nop_cnt;
-//コア命令
-extern uint64_t add_cnt;
-extern uint64_t addi_cnt;
-extern uint64_t sub_cnt;
-extern uint64_t ori_cnt;
-extern uint64_t sw_cnt;
-extern uint64_t lw_cnt;
-extern uint64_t slt_cnt;
-extern uint64_t beq_cnt;
-extern uint64_t bne_cnt;
-extern uint64_t fslt_cnt;
-extern uint64_t fneg_cnt;
-//コア命令2
-extern uint64_t sll_cnt;
-extern uint64_t srl_cnt;
-extern uint64_t j_cnt;
-extern uint64_t jr_cnt;
-extern uint64_t jal_cnt;
-//特殊命令
-extern uint64_t rsb_cnt;
-extern uint64_t rrb_cnt;
-extern uint64_t hlt_cnt;
-//浮動小数点数命令
-extern uint64_t fadd_cnt;
-extern uint64_t fmul_cnt;
-extern uint64_t finv_cnt;
-extern uint64_t fsqrt_cnt;
-extern uint64_t f2i_cnt;
-extern uint64_t i2f_cnt;
-extern uint64_t flr_cnt;
-//全命令
+enum Instruction {
+	//nop
+	nop_cnt,
+	//コア命令
+	add_cnt, addi_cnt, sub_cnt, ori_cnt, sw_cnt, lw_cnt, slt_cnt, beq_cnt, bne_cnt, fslt_cnt, fneg_cnt,
+	//コア命令2
+	sll_cnt, srl_cnt, j_cnt, jr_cnt, jal_cnt,
+	//特殊命令
+	rsb_cnt, rrb_cnt, hlt_cnt,
+	//浮動小数点数命令
+	fadd_cnt, fmul_cnt, finv_cnt, fsqrt_cnt, f2i_cnt, i2f_cnt, flr_cnt
+};
+//各命令実行回数
+extern uint64_t each_inst_cnt[TYPE];
+
+//全命令実行回数
 extern uint64_t total_inst_cnt;
 
 //pc毎の命令実行回数
-extern uint64_t inst_cnt[INST_ADDR];
+extern uint64_t pc_inst_cnt[INST_ADDR];
 
 #endif
