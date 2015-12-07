@@ -315,7 +315,7 @@ void execute(uint32_t instruction)
 	//J形式用
 	uint32_t addr = bits(instruction, 6, 31);
 	//rrb用
-	uint8_t rrb_buf;
+	char rrb_buf;
 
 
 	pc += dpc;
@@ -408,7 +408,7 @@ void execute(uint32_t instruction)
 			break;
 		//rrb
 		case 0x3e:
-			scanf("%"SCNu8"", &rrb_buf);
+			scanf("%c", &rrb_buf);
 			reg[rt] >>= 8; reg[rt] <<= 8; reg[rt] |= rrb_buf;
 			each_inst_cnt[rrb_cnt]++;
 			break;
