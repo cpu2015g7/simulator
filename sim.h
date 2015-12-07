@@ -9,6 +9,13 @@
 #define INST_ADDR (1024*1024*4)
 #define DATA_ADDR (1024*1024*4)
 
+//rsbの出力をcoreと異なる表示(16進数表示)にするかどうか
+extern bool NON_CORE;
+//浮動小数点数命令でFPUのC実装を使うかどうか
+extern bool USE_FPU;
+//実行命令回数表示時にソートするかどうか
+extern bool SORT;
+
 //命令用メモリ
 extern uint32_t INST_MEM[INST_ADDR];
 //データ用メモリ

@@ -2,8 +2,6 @@
 //一段遅延分岐->beq,bne命令の直後の命令は如何なる場合も実行される
 //尚、jump系の命令(j, jr, jal)はすぐさま飛ぶ
 //breakpointの止める命令は0xf4000000とした
-//#include <assert.h>より前にNDEBUGマクロがあるとassert()は何もしない
-//#define NDEBUG
 
 #include <stdio.h>
 #include <inttypes.h>
@@ -18,10 +16,11 @@
 #include "display.h"
 
 //rsbの出力をcoreと同じ出力にするかどうか
-bool CORRESPOND_CORE = true;
-
+bool NON_CORE = false;
 //浮動小数点数命令でFPUのC実装を使うかどうか
 bool USE_FPU = false;
+//実行命令回数表示時にソートするかどうか
+bool SORT = false;
 
 //命令用メモリ
 uint32_t INST_MEM[INST_ADDR];
@@ -400,7 +399,7 @@ void execute(uint32_t instruction)
 			break;
 		//rsb
 		case 0x3f:
-			if (CORRESPOND_CORE)
+			if (!NON_CORE)
 				fprintf(stdout, "%c", (char)(reg[rs] & 0xff));
 			else
 				fprintf(stdout, "%02x\n", reg[rs] & 0xff);
@@ -462,11 +461,13 @@ int main(int argc, char *argv[])
 	max_inst = atol(argv[2]);
 
 	//オプションの設定
-	for (i = 3; argv[i] != NULL; i++) {
+	for (int i = 3; i < argc; i++) {
 		if (!strcmp(argv[i], "-ncore"))
-			CORRESPOND_CORE = false;
+			NON_CORE = true;
 		else if (!strcmp(argv[i], "-fpu"))
 			USE_FPU = true;
+		else if (!strcmp(argv[i], "-sort"))
+			SORT = true;
 	}
 
 	//命令実行
